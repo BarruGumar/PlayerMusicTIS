@@ -1,11 +1,24 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <meta charset="UTF-8">
+  <title>Controlo de Msica Remota</title>
 </head>
 <body>
+  <h1>Lista de Msicas</h1>
+  <ul id="music-list">
+    <li>musica1.mp3 <button onclick="play('musica1.mp3')">Tocar</button></li>
+    <li>musica2.mp3 <button onclick="play('musica2.mp3')">Tocar</button></li>
+  </ul>
 
+  <script>
+    function play(filename) {
+      fetch('http://<IP_DO_PC_REMOTO>:3000/play', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ file: filename })
+      });
+    }
+  </script>
 </body>
 </html>
