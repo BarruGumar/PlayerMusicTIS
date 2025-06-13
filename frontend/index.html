@@ -2,14 +2,18 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
-  <title>Controlo de Msica Remota</title>
+  <title>Controlo de Música Remota</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Lista de Msicas</h1>
+
+  <h1>Lista de Músicas</h1>
+  <div class="buttons"></div>
   <ul id="music-list">
     <li>musica1.mp3 <button onclick="play('musica1.mp3')">Tocar</button></li>
     <li>musica2.mp3 <button onclick="play('musica2.mp3')">Tocar</button></li>
   </ul>
+</div>
 
   <script>
     function play(filename) {
