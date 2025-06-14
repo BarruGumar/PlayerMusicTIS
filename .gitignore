@@ -1,2 +1,1 @@
-backend/node_modules
-# Ignore node_modules in the backend directory
+./backend/node_modules/ 
