@@ -4,16 +4,19 @@
   <meta charset="UTF-8">
   <title>Controlo de Música Remota</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="script" href="script.js">
+  <!--<link rel="script" href="backend/server.js">-->
 </head>
 <body>
 
-  <h1>Lista de Músicas</h1>
-  <div class="buttons"></div>
+<div class="musics">
+  <h1>Music Player TIS!</h1>
   <ul id="music-list">
-    <li>musica1.mp3 <button onclick="play('musica1.mp3')">Tocar</button></li>
-    <li>musica2.mp3 <button onclick="play('musica2.mp3')">Tocar</button></li>
+    <li>musica1.mp3 <button onclick="play('musica1.mp3')" class="button">Tocar</button></li>
+    <li>musica2.mp3 <button onclick="play('musica2.mp3')" class="button">Tocar</button></li>
   </ul>
 </div>
+
 
   <script>
     function play(filename) {

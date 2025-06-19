@@ -6,15 +6,19 @@ const app = express();
 app.use(bodyParser.json());
 
 app.post('/play', (req, res) => {
-  const file = req.body.file;
-  const fullPath = `/caminho/para/musicas/${file}`;
 
-  exec(`cvlc "${fullPath}"`, (error, stdout, stderr) => {
+
+  const file = req.body.file;
+  const fullPath = `../music/${file}`;
+
+  consle.log(`A tocar música: ${file}`);
+
+  exec(`python tocar.py "${fullPath}"`, (error, stdout, stderr) => {
     if (error) {
       console.error(`Erro: ${error.message}`);
-      return res.status(500).send('Erro ao tocar msica');
+      return res.status(500).send('Erro ao tocar música');
     }
-    res.send('Msica a tocar');
+    res.send('Música a tocar');
   });
 });
 
