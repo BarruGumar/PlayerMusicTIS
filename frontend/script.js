@@ -1,3 +1,5 @@
+
+
 const API_URL = 'http://localhost:3000/api';
 
 let musicLibrary = [];
@@ -23,47 +25,61 @@ async function apiRequest(endpoint, method = 'GET', data = null) {
     }
 }
 
-async function loadLibrary() {
-    showMessage('A carregar biblioteca...', 'loading');
-    const result = await apiRequest('/library');
-    if (result?.success) {
-        musicLibrary = result.library;
+const loadLibrary = async () => {
+    try {
+        showMessage('A carregar biblioteca...', 'loading');
+    const result = await apiRequest('/songs',);
+    console.log('Biblioteca carregada:', result);
+
+        musicLibrary = result;
         displayMusicList();
         showMessage(`${musicLibrary.length} música(s) encontrada(s)`, 'success');
-    } else {
+        return musicLibrary;
+    }
+    catch (error) {
+        console.error('Erro ao carregar biblioteca:', error);
         showMessage('Erro ao carregar biblioteca', 'error');
     }
+    
 }
 
-function displayMusicList() {
+function displayMusicList () {
+    console.log('peguei');
     const list = document.getElementById('musicList');
     if (musicLibrary.length === 0) {
         list.innerHTML = `<div style="text-align:center; opacity:0.7;">Nenhuma música encontrada.</div>`;
         return;
     }
-    list.innerHTML = musicLibrary.map((song, index) => `
-        <div class="music-item" onclick="selectSong(${index})" id="song-${index}">
-            <div><strong>${song.name}</strong><div class="file-info">${song.filename}</div></div>
-            <div class="file-info">${song.filename.split('.').pop().toUpperCase()}</div>
+    list.innerHTML = musicLibrary.map((key) => `
+        <div class="music-item" onclick="selectSong(${key.id})" id="song-${key.id}">
+            <div><strong>${key.title}</strong><div class="file-info">${key.path}</div></div>
+            <div class="file-info">${key.path.split('.').pop().toUpperCase()}</div>
         </div>
-    `).join('');
+    `) 
 }
 
 function selectSong(index) {
     document.querySelectorAll('.music-item').forEach(item => item.classList.remove('selected'));
     document.getElementById(`song-${index}`).classList.add('selected');
     selectedSong = musicLibrary[index];
-    showMessage(`Selecionado: ${selectedSong.name}`, 'success');
+    console.log('Music', musicLibrary);
+     console.log('index',index)
+        console.log('Música selecionada:', selectedSong);
+    showMessage(`Selecionado: ${selectedSong.title}`, 'success');
     document.getElementById('playBtn').disabled = false;
 }
 
-async function playSelected() {
+const playSelected = async () => {
+      console.log('Música selecionada:', selectedSong.path);
     if (!selectedSong) return showMessage('Selecione uma música!', 'error');
     const btn = document.getElementById('playBtn');
     btn.disabled = true;
     btn.innerText = '⏳ A tocar...';
 
-    const result = await apiRequest('/play', 'POST', { filename: selectedSong.filename });
+    const body = ({path: selectedSong.path} )
+    console.log('Body:', body);
+
+    const result = await apiRequest('/play', 'POST', body);
     if (result?.success) {
         isPlaying = true;
         btn.innerText = '▶️ A Tocar';
@@ -110,7 +126,7 @@ function checkStatusPeriodically() {
 }
 
 // 🎚️ Controle de volume
-document.getElementById('volumeRange').addEventListener('input', async function () {
+document.getElementById('volumeRange').addEventListener('input',  async () => {
     const volume = parseInt(this.value, 10);
     const result = await apiRequest('/volume', 'POST', { volume });
     if (result?.success) {

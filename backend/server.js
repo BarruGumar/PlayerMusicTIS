@@ -1,6 +1,6 @@
 const express = require('express');
 const fs = require('fs');
-const path = require('path');
+const paths = require('path');
 const cors = require('cors');
 const { spawn } = require('child_process');
 const axios = require('axios');
@@ -9,12 +9,14 @@ const app = express();
 const PORT = 3000;
 const PYTHON_API_URL = 'http://localhost:5000';
 
+
 app.use(cors());
 app.use(express.json());
-app.use(express.static('frontend'));
+app.use(express.static('../frontend'));
+
 
 // Servir arquivos de música
-app.use('/music', express.static('music'));
+app.use('/music', express.static('../music'));
 
 let pythonProcess = null;
 
@@ -72,19 +74,27 @@ async function callPythonAPI(endpoint, method = 'GET', data = null) {
     }
 }
 
+
+
+
 // Listar músicas disponíveis
 app.get('/api/songs', (req, res) => {
-    const musicDir = path.join(__dirname, '../music');
+    const musicDir = paths.join(__dirname, '../','music');
+    
+
     try {
         const files = fs.readdirSync(musicDir)
             .filter(file => file.endsWith('.mp3') || file.endsWith('.wav') || file.endsWith('.ogg'))
-            .map(file => ({
+            .map((file, index) => ({
+                id: index,
                 name: file,
-                path: path.join(musicDir, file), // Caminho absoluto para o Python
+                path: paths.join(musicDir, file), // Caminho absoluto para o Python
                 relativePath: `/music/${file}`,
                 title: file.replace(/\.[^/.]+$/, '') // Remove extensão
             }));
         res.json(files);
+
+        
     } catch (error) {
         console.error('Erro ao listar músicas:', error);
         res.status(500).json({ error: 'Erro ao listar músicas' });
@@ -93,16 +103,17 @@ app.get('/api/songs', (req, res) => {
 
 // Tocar música remotamente
 app.post('/api/play', async (req, res) => {
-    const { songPath } = req.body;
+    const { path } = req.body;
+    console.log("Songpath", path);
     
     const result = await callPythonAPI('/api/tocar', 'POST', {
-        ficheiro: songPath
+        ficheiro: path
     });
     
     if (result.success) {
         res.json({ 
             message: 'Música iniciada', 
-            song: path.basename(songPath),
+            song: paths.basename(path),
             ...result.data 
         });
     } else {
