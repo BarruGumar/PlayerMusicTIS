@@ -9,8 +9,10 @@
   "author": "",
   "license": "ISC",
   "description": "",
-  "dependencies": { 
+  "dependencies": {
+    "axios": "^1.10.0",
+    "cors": "^2.8.5",
     "express": "^4.17.1",
-    "cors": "^2.8.5"}
-
+    "expresse": "^1.0.2"
+  }
 }

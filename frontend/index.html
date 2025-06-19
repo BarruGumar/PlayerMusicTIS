@@ -1,31 +1,43 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <title>Controlo de Música Remota</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="script" href="script.js">
-  <!--<link rel="script" href="backend/server.js">-->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Music Player TIS</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+    <div class="container">
+        <h1>🎵 Music Player TIS</h1>
 
-<div class="musics">
-  <h1>Music Player TIS!</h1>
-  <ul id="music-list">
-    <li>musica1.mp3 <button onclick="play('musica1.mp3')" class="button">Tocar</button></li>
-    <li>musica2.mp3 <button onclick="play('musica2.mp3')" class="button">Tocar</button></li>
-  </ul>
-</div>
+        <div class="status" id="status">
+            <div class="loading">A carregar...</div>
+        </div>
 
+        <div class="music-list" id="musicList">
+            <!-- Músicas serão exibidas aqui -->
+        </div>
 
-  <script>
-    function play(filename) {
-      fetch('http://<IP_DO_PC_REMOTO>:3000/play', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ file: filename })
-      });
-    }
-  </script>
+        <div class="controls">
+            <button class="btn primary" id="playBtn" onclick="playSelected()">
+                ▶️ Tocar
+            </button>
+            <button class="btn danger" id="stopBtn" onclick="stopMusic()">
+                ⏹️ Parar
+            </button>
+        </div>
+
+        <!-- Controle de volume -->
+        <div style="margin-bottom: 20px; text-align: center;">
+            <label for="volumeRange" style="display: block; margin-bottom: 8px;">🔊 Volume</label>
+            <input type="range" id="volumeRange" min="0" max="100" value="100" />
+        </div>
+
+        <button class="btn refresh-btn" onclick="loadLibrary()">
+            🔄 Atualizar Lista
+        </button>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
