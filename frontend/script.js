@@ -80,7 +80,7 @@ const playSelected = async () => {
     console.log('Body:', body);
 
     const result = await apiRequest('/play', 'POST', body);
-    if (result?.success) {
+    if (result?.response.code) {
         isPlaying = true;
         btn.innerText = '▶️ A Tocar';
         document.querySelectorAll('.music-item').forEach(i => i.classList.remove('playing'));
@@ -89,7 +89,7 @@ const playSelected = async () => {
         checkStatusPeriodically();
     } else {
         btn.innerText = '▶️ Tocar';
-        showMessage('Erro ao tocar', 'error');
+        showMessage('Erro ao tocar 2', 'error');
     }
     btn.disabled = false;
 }
@@ -114,7 +114,7 @@ function checkStatusPeriodically() {
     if (!isPlaying) return;
     setTimeout(async () => {
         const result = await apiRequest('/status');
-        if (result?.success && !result.status.is_playing) {
+        if (result.success && !result.status.is_playing) {
             isPlaying = false;
             document.getElementById('playBtn').innerText = '▶️ Tocar';
             document.querySelectorAll('.music-item').forEach(i => i.classList.remove('playing'));
