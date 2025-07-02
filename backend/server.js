@@ -1,6 +1,6 @@
 const express = require('express');
 const fs = require('fs');
-const paths = require('path');
+const path = require('path');
 const cors = require('cors');
 const { spawn } = require('child_process');
 const axios = require('axios');
@@ -9,178 +9,175 @@ const app = express();
 const PORT = 3000;
 const PYTHON_API_URL = 'http://localhost:5000';
 
-
 app.use(cors());
 app.use(express.json());
 app.use(express.static('../frontend'));
-
-
-// Servir arquivos de música
 app.use('/music', express.static('../music'));
 
 let pythonProcess = null;
+let restarting = false;
 
-// Função para iniciar o servidor Python se não estiver rodando
+// Iniciar o servidor Python
 function initPythonServer() {
-    if (!pythonProcess) {
+    if (!pythonProcess && !restarting) {
+        restarting = true;
         console.log('🐍 Iniciando servidor Python...');
         pythonProcess = spawn('python', ['tocar.py', '--api'], {
             stdio: ['inherit', 'pipe', 'pipe']
         });
-        
+
         pythonProcess.stdout.on('data', (data) => {
-            console.log(`Python: ${data}`);
+            console.log(`Python: ${data.toString()}`);
         });
-        
+
         pythonProcess.stderr.on('data', (data) => {
-            console.error(`Python Error: ${data}`);
+            console.error(`Python Error: ${data.toString()}`);
         });
-        
+
         pythonProcess.on('close', (code) => {
-            console.log(`Servidor Python encerrado com código ${code}`);
+            console.log(`⚠️ Servidor Python foi encerrado com código ${code}`);
             pythonProcess = null;
+            restarting = false;
+
+            // Reinicia o servidor automaticamente se falhar
+            setTimeout(initPythonServer, 2000);
         });
-        
-        // Aguarda alguns segundos para o Flask iniciar
+
         setTimeout(() => {
-            console.log('✅ Servidor Python iniciado!');
+            console.log('✅ Servidor Python iniciado');
+            restarting = false;
         }, 3000);
     }
 }
 
-// Função helper para fazer requisições ao Python
+// Chamar API Python
 async function callPythonAPI(endpoint, method = 'GET', data = null) {
     try {
-        const config = {
+        const response = await axios({
             method,
             url: `${PYTHON_API_URL}${endpoint}`,
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        };
-        
-        if (data) {
-            config.data = data;
-        }
-        
-        const response = await axios(config);
+            headers: { 'Content-Type': 'application/json' },
+            data
+        });
         return { success: true, data: response.data };
     } catch (error) {
-        console.error(`Erro na API Python (${endpoint}):`, error.message);
-        return { 
-            success: false, 
-            error: error.response ? error.response.data : error.message 
+        console.error(`❌ Erro ao chamar ${endpoint}:`, error.message);
+        return {
+            success: false,
+            error: error.response ? error.response.data : error.message
         };
     }
 }
 
-
-
-
-// Listar músicas disponíveis
+// Rota: Listar músicas
 app.get('/api/songs', (req, res) => {
-    const musicDir = paths.join(__dirname, '../','music');
-    
+    const musicDir = path.join(__dirname, '../music');
 
     try {
         const files = fs.readdirSync(musicDir)
-            .filter(file => file.endsWith('.mp3') || file.endsWith('.wav') || file.endsWith('.ogg'))
-            .map((file, index) => ({
-                id: index,
-                name: file,
-                path: paths.join(musicDir, file), // Caminho absoluto para o Python
-                relativePath: `/music/${file}`,
-                title: file.replace(/\.[^/.]+$/, '') // Remove extensão
-            }));
-        res.json(files);
+            .filter(file => /\.(mp3|wav|ogg)$/i.test(file))
+            .map((file, index) => {
+    const title = path.basename(file, path.extname(file));
+    const imageExtensions = ['.jpg', '.png', '.jpeg', '.webp'];
+    const imageDir = path.join(__dirname, '../image');
 
-        
+    let imagePath = null;
+    for (const ext of imageExtensions) {
+        const candidate = path.join(imageDir, title + ext);
+        if (fs.existsSync(candidate)) {
+            imagePath = `/image/${title + ext}`;
+            break;
+        }
+    }
+
+    return {
+        id: index,
+        name: file,
+        path: path.join(musicDir, file),
+        relativePath: `/music/${file}`,
+        title,
+        image: imagePath
+    };
+});
+
+        res.json(files);
     } catch (error) {
         console.error('Erro ao listar músicas:', error);
         res.status(500).json({ error: 'Erro ao listar músicas' });
     }
 });
 
-// Tocar música remotamente
+// Rota: Tocar música
 app.post('/api/play', async (req, res) => {
-    const { path } = req.body;
-    console.log("Songpath", path);
-    
-    const result = await callPythonAPI('/api/tocar', 'POST', {
-        ficheiro: path
-    });
-    
+    const { path: filePath } = req.body;
+
+    if (!filePath || typeof filePath !== 'string') {
+        return res.status(400).json({ error: 'Caminho da música inválido' });
+    }
+
+    const result = await callPythonAPI('/api/tocar', 'POST', { ficheiro: filePath });
+
     if (result.success) {
-        res.json({ 
-            message: 'Música iniciada', 
-            song: paths.basename(path),
-            ...result.data 
+        res.json({
+            message: 'Música iniciada',
+            song: path.basename(filePath),
+            ...result.data
         });
     } else {
-        res.status(500).json({ 
+        res.status(500).json({
             error: 'Erro ao reproduzir música',
-            details: result.error 
+            details: result.error
         });
     }
 });
 
-// Pausar música
+// Rota: Pausar
 app.post('/api/pause', async (req, res) => {
     const result = await callPythonAPI('/api/pausar', 'POST');
-    
-    if (result.success) {
-        res.json({ message: 'Música pausada', ...result.data });
-    } else {
+    result.success ? res.json({ message: 'Música pausada', ...result.data }) :
         res.status(500).json({ error: 'Erro ao pausar música' });
-    }
 });
 
-// Retomar música
+// Rota: Retomar
 app.post('/api/resume', async (req, res) => {
     const result = await callPythonAPI('/api/retomar', 'POST');
-    
-    if (result.success) {
-        res.json({ message: 'Música retomada', ...result.data });
-    } else {
+    result.success ? res.json({ message: 'Música retomada', ...result.data }) :
         res.status(500).json({ error: 'Erro ao retomar música' });
-    }
 });
 
-// Parar música
+// Rota: Parar
 app.post('/api/stop', async (req, res) => {
     const result = await callPythonAPI('/api/parar', 'POST');
-    
-    if (result.success) {
-        res.json({ message: 'Música parada', ...result.data });
-    } else {
+    result.success ? res.json({ message: 'Música parada', ...result.data }) :
         res.status(500).json({ error: 'Erro ao parar música' });
-    }
 });
 
-// Controlar volume
+// Rota: Alterar volume
 app.post('/api/volume', async (req, res) => {
     const { volume } = req.body;
-    
-    const result = await callPythonAPI('/api/volume', 'POST', {
-        volume: parseFloat(volume) / 100 // Converte de 0-100 para 0-1
-    });
-    
-    if (result.success) {
-        res.json({ message: 'Volume alterado', ...result.data });
-    } else {
-        res.status(500).json({ error: 'Erro ao alterar volume' });
+    const parsed = parseFloat(volume);
+
+    if (isNaN(parsed) || parsed < 0 || parsed > 100) {
+        return res.status(400).json({ error: 'Volume inválido (deve ser entre 0 e 100)' });
     }
+
+    const result = await callPythonAPI('/api/volume', 'POST', {
+        volume: parsed / 100
+    });
+
+    result.success ? res.json({ message: 'Volume alterado', ...result.data }) :
+        res.status(500).json({ error: 'Erro ao alterar volume' });
 });
 
-// Status da reprodução
+// Rota: Status
 app.get('/api/status', async (req, res) => {
     const result = await callPythonAPI('/api/status');
-    
+
     if (result.success) {
         res.json(result.data);
     } else {
-        res.json({ 
-            tocando: false, 
+        res.json({
+            tocando: false,
             pausado: false,
             ficheiro_atual: null,
             volume: 70,
@@ -190,33 +187,26 @@ app.get('/api/status', async (req, res) => {
     }
 });
 
-// Rota para verificar se o servidor Python está rodando
+// Rota: Health check
 app.get('/api/health', async (req, res) => {
     const result = await callPythonAPI('/api/status');
-    res.json({ 
+    res.json({
         python_server: result.success,
         node_server: true
     });
 });
 
-// Inicializar servidor Python quando o Node.js iniciar
+// Inicializa servidor Python
 initPythonServer();
 
-// Encerrar processo Python quando o Node.js for encerrado
-process.on('SIGINT', () => {
+// Encerra o processo Python ao sair do Node
+function gracefulShutdown() {
     console.log('\n🛑 Encerrando servidores...');
-    if (pythonProcess) {
-        pythonProcess.kill('SIGTERM');
-    }
+    if (pythonProcess) pythonProcess.kill('SIGTERM');
     process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-    if (pythonProcess) {
-        pythonProcess.kill('SIGTERM');
-    }
-    process.exit(0);
-});
+}
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', gracefulShutdown);
 
 app.listen(PORT, () => {
     console.log(`🚀 Servidor Node.js rodando em http://localhost:${PORT}`);

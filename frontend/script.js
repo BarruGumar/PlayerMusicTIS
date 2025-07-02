@@ -43,7 +43,26 @@ const loadLibrary = async () => {
     
 }
 
-function displayMusicList () {
+function displayMusicList() {
+    console.log('peguei');
+    const list = document.getElementById('musicList');
+
+    if (musicLibrary.length === 0) {
+        list.innerHTML = `<div style="text-align:center; opacity:0.7;">Nenhuma música encontrada.</div>`;
+        return;
+    }
+
+    list.innerHTML = musicLibrary.map((key) => `
+        <div class="music-item" onclick="selectSong(${key.id})" id="song-${key.id}">
+            ${key.image ? `<img src="${key.image}" alt="${key.title}" class="music-thumbnail" />` : ''}
+            <div>
+                <strong>${key.title}</strong>
+            </div>
+            <div class="file-info">${key.path.split('.').pop().toUpperCase()}</div>
+        </div>
+    `).join('');}
+
+/*function displayMusicList () {
     console.log('peguei');
     const list = document.getElementById('musicList');
     if (musicLibrary.length === 0) {
@@ -57,7 +76,7 @@ function displayMusicList () {
         </div>
     `) 
 }
-
+*/
 function selectSong(index) {
     document.querySelectorAll('.music-item').forEach(item => item.classList.remove('selected'));
     document.getElementById(`song-${index}`).classList.add('selected');
@@ -80,7 +99,7 @@ const playSelected = async () => {
     console.log('Body:', body);
 
     const result = await apiRequest('/play', 'POST', body);
-    if (result?.response.code) {
+    if (result?.response.success) {
         isPlaying = true;
         btn.innerText = '▶️ A Tocar';
         document.querySelectorAll('.music-item').forEach(i => i.classList.remove('playing'));
