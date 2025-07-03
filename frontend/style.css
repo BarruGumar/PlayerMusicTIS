@@ -49,7 +49,7 @@ h1 {
 
 .music-thumbnail {
     width: 80px;
-    height: 65px;
+    height: 80px;
     object-fit: cover;
     margin-right: 10px;
     border-radius: 8px;
