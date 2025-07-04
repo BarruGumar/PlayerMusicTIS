@@ -7,14 +7,14 @@ const axios = require('axios');
 
 const app = express();
 const PORT = 3000;
-const PYTHON_API_URL = 'http://localhost:5000';
+const PYTHON_API_URL = 'http://172.16.221.201:5000';
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static('../frontend'));
 app.use('/music', express.static('../music'));
 app.use('/image', express.static(path.join(__dirname, '../image')));
-
+app.use(express.static(path.join(__dirname, 'public')));
 
 let pythonProcess = null;
 let restarting = false;

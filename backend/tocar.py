@@ -164,8 +164,8 @@ if __name__ == "__main__":
     # Verifica se deve rodar em modo API ou linha de comando
     if len(sys.argv) > 1 and sys.argv[1] == '--api':
         print("=== Modo API ===")
-        print("Servidor rodando em http://localhost:5000")
-        app.run(host='0.0.0.0', port=5000, debug=True)
+        print("Servidor rodando em http://172.16.221.201:5000")
+        app.run(host='172.16.221.201', port=5000, debug=True)
     else:
         print("=== Modo Linha de Comando ===")
         modo_linha_comando()

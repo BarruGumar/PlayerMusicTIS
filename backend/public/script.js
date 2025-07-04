@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://172.16.221.201:3000/api';
 
 let musicLibrary = [];
 let selectedSong = null;
@@ -49,16 +49,32 @@ function displayMusicList() {
         return;
     }
 
-    list.innerHTML = musicLibrary.map((key) => `
+   list.innerHTML = musicLibrary.map((key) => `
         <div class="music-item" onclick="selectSong(${key.id})" id="song-${key.id}">
-            ${key.image ? `<img src="${key.image}" alt="${key.title}" class="music-thumbnail" />` : ''}
-            <div>
-                <strong>${key.title}</strong>
+        ${key.image 
+  ? `<img src="${key.image}" alt="${key.title}" class="music-thumbnail" />` 
+  : '<img src="/image/default.jpg" alt="Thumbnail" class="music-thumbnail" />'}
+
+        <div>
+                 <strong>${key.title}</strong>
             </div>
             <div class="file-info">${key.path.split('.').pop().toUpperCase()}</div>
         </div>
     `).join('');
 }
+
+
+
+   /*list.innerHTML = musicLibrary.map((key) => `
+        <div class="music-item" onclick="selectSong(${key.id})" id="song-${key.id}">
+            ${key.image ? `<img src="${key.image}" alt="${key.title}" class="music-thumbnail" />` : ''}
+            <div>
+                 <strong>${key.title}</strong>
+            </div>
+            <div class="file-info">${key.path.split('.').pop().toUpperCase()}</div>
+        </div>
+    `).join('');
+}*/
 
 function selectSong(index) {
     document.querySelectorAll('.music-item').forEach(item => item.classList.remove('selected'));
