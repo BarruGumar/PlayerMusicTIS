@@ -1,5 +1,3 @@
-
-
 const API_URL = 'http://localhost:3000/api';
 
 let musicLibrary = [];
@@ -28,8 +26,8 @@ async function apiRequest(endpoint, method = 'GET', data = null) {
 const loadLibrary = async () => {
     try {
         showMessage('A carregar biblioteca...', 'loading');
-    const result = await apiRequest('/songs',);
-    console.log('Biblioteca carregada:', result);
+        const result = await apiRequest('/songs');
+        console.log('Biblioteca carregada:', result);
 
         musicLibrary = result;
         displayMusicList();
@@ -40,7 +38,6 @@ const loadLibrary = async () => {
         console.error('Erro ao carregar biblioteca:', error);
         showMessage('Erro ao carregar biblioteca', 'error');
     }
-    
 }
 
 function displayMusicList() {
@@ -60,46 +57,32 @@ function displayMusicList() {
             </div>
             <div class="file-info">${key.path.split('.').pop().toUpperCase()}</div>
         </div>
-    `).join('');}
-
-/*function displayMusicList () {
-    console.log('peguei');
-    const list = document.getElementById('musicList');
-    if (musicLibrary.length === 0) {
-        list.innerHTML = `<div style="text-align:center; opacity:0.7;">Nenhuma música encontrada.</div>`;
-        return;
-    }
-    list.innerHTML = musicLibrary.map((key) => `
-        <div class="music-item" onclick="selectSong(${key.id})" id="song-${key.id}">
-            <div><strong>${key.title}</strong><div class="file-info">${key.path}</div></div>
-            <div class="file-info">${key.path.split('.').pop().toUpperCase()}</div>
-        </div>
-    `) 
+    `).join('');
 }
-*/
+
 function selectSong(index) {
     document.querySelectorAll('.music-item').forEach(item => item.classList.remove('selected'));
     document.getElementById(`song-${index}`).classList.add('selected');
     selectedSong = musicLibrary[index];
     console.log('Music', musicLibrary);
-     console.log('index',index)
-        console.log('Música selecionada:', selectedSong);
+    console.log('index', index);
+    console.log('Música selecionada:', selectedSong);
     showMessage(`Selecionado: ${selectedSong.title}`, 'success');
     document.getElementById('playBtn').disabled = false;
 }
 
 const playSelected = async () => {
-      console.log('Música selecionada:', selectedSong.path);
+    console.log('Música selecionada:', selectedSong.path);
     if (!selectedSong) return showMessage('Selecione uma música!', 'error');
     const btn = document.getElementById('playBtn');
     btn.disabled = true;
     btn.innerText = '⏳ A tocar...';
 
-    const body = ({path: selectedSong.path} )
+    const body = { path: selectedSong.path };
     console.log('Body:', body);
 
     const result = await apiRequest('/play', 'POST', body);
-    if (result?.response.success) {
+    if (result && result.message) {
         isPlaying = true;
         btn.innerText = '▶️ A Tocar';
         document.querySelectorAll('.music-item').forEach(i => i.classList.remove('playing'));
@@ -108,14 +91,14 @@ const playSelected = async () => {
         checkStatusPeriodically();
     } else {
         btn.innerText = '▶️ Tocar';
-        showMessage('Erro ao tocar 2', 'error');
+        showMessage('Erro ao tocar', 'error');
     }
     btn.disabled = false;
 }
 
 async function stopMusic() {
     const result = await apiRequest('/stop', 'POST');
-    if (result?.success) {
+    if (result && result.message) {
         isPlaying = false;
         document.getElementById('playBtn').innerText = '▶️ Tocar';
         document.querySelectorAll('.music-item').forEach(i => i.classList.remove('playing'));
@@ -133,7 +116,7 @@ function checkStatusPeriodically() {
     if (!isPlaying) return;
     setTimeout(async () => {
         const result = await apiRequest('/status');
-        if (result.success && !result.status.is_playing) {
+        if (result && result.tocando === false) {
             isPlaying = false;
             document.getElementById('playBtn').innerText = '▶️ Tocar';
             document.querySelectorAll('.music-item').forEach(i => i.classList.remove('playing'));
@@ -144,11 +127,15 @@ function checkStatusPeriodically() {
     }, 2000);
 }
 
-// 🎚️ Controle de volume
-document.getElementById('volumeRange').addEventListener('input',  async () => {
+// 🎚️ Controle de volume - CORRIGIDO
+document.getElementById('volumeRange').addEventListener('input', async function() {
     const volume = parseInt(this.value, 10);
+    console.log('Alterando volume para:', volume);
+    
     const result = await apiRequest('/volume', 'POST', { volume });
-    if (result?.success) {
+    console.log('Resultado da alteração de volume:', result);
+    
+    if (result && result.message) {
         showMessage(`🔊 Volume: ${volume}%`, 'success');
     } else {
         showMessage('Erro ao ajustar volume', 'error');
