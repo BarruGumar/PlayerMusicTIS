@@ -7,7 +7,7 @@ const axios = require('axios');
 
 const app = express();
 const PORT = 3000;
-const PYTHON_API_URL = 'http://172.16.221.201:5000';
+const PYTHON_API_URL = 'http://192.168.1.101:5000';
 
 app.use(cors());
 app.use(express.json());
@@ -71,7 +71,7 @@ async function callPythonAPI(endpoint, method = 'GET', data = null) {
     }
 }
 
-// Rota: Listar músicas
+// Rota: Listar músicas - CORRIGIDA
 app.get('/api/songs', (req, res) => {
     const musicDir = path.join(__dirname, '../music');
 
@@ -79,36 +79,40 @@ app.get('/api/songs', (req, res) => {
         const files = fs.readdirSync(musicDir)
             .filter(file => /\.(mp3|wav|ogg)$/i.test(file))
             .map((file, index) => {
-    const title = path.basename(file, path.extname(file));
-    const imageExtensions = ['.jpg', '.png', '.jpeg', '.webp'];
-    const imageDir = path.join(__dirname, '../image');
+                const title = path.basename(file, path.extname(file));
+                const imageExtensions = ['.jpg', '.png', '.jpeg', '.webp'];
+                const imageDir = path.join(__dirname, '../image');
+                
+                let imagePath = null;
+                for (const ext of imageExtensions) {
+                    const candidate = path.join(imageDir, title + ext);
+                    if (fs.existsSync(candidate)) {
+                        // ✅ CORREÇÃO: Retorna caminho absoluto para o frontend
+                        imagePath = `/${title + ext}`;
+                        break;
+                    }
+                }
 
-    let imagePath = null;
-    for (const ext of imageExtensions) {
-        const candidate = path.join(imageDir, title + ext);
-        if (fs.existsSync(candidate)) {
-            imagePath = `/image/${title + ext}`;
-            break;
-        }
-    }
+                console.log(`🎵 Música: ${title}`);
+                console.log(`🖼️  Imagem: ${imagePath || 'Não encontrada'}`);
 
-    return {
-        id: index,
-        name: file,
-        path: path.join(musicDir, file),
-        relativePath: `/music/${file}`,
-        title,
-        image: imagePath
-    };
-});
+                return {
+                    id: index,
+                    name: file,
+                    path: path.join(musicDir, file),
+                    relativePath: `/music/${file}`,
+                    title,
+                    image: imagePath
+                };
+            });
 
+        console.log(`📚 ${files.length} músicas encontradas`);
         res.json(files);
     } catch (error) {
         console.error('Erro ao listar músicas:', error);
         res.status(500).json({ error: 'Erro ao listar músicas' });
     }
 });
-
 // Rota: Tocar música
 app.post('/api/play', async (req, res) => {
     const { path: filePath } = req.body;

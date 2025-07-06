@@ -1,4 +1,4 @@
-const API_URL = 'http://172.16.221.201:3000/api';
+const API_URL = 'http://192.168.1.101:3000/api';
 
 let musicLibrary = [];
 let selectedSong = null;
@@ -27,7 +27,19 @@ const loadLibrary = async () => {
     try {
         showMessage('A carregar biblioteca...', 'loading');
         const result = await apiRequest('/songs');
-        console.log('Biblioteca carregada:', result);
+        console.log('🔍 RESPOSTA COMPLETA DA API:', result);
+        
+        // Vamos verificar cada música individualmente
+        if (result && Array.isArray(result)) {
+            result.forEach((song, index) => {
+                console.log(`\n📀 MÚSICA ${index + 1}:`);
+                console.log(`   📝 Título: ${song.title}`);
+                console.log(`   🎵 Arquivo: ${song.name}`);
+                console.log(`   🖼️  Campo image: "${song.image}"`);
+                console.log(`   ✅ Tem imagem?: ${song.image ? 'SIM' : 'NÃO'}`);
+                console.log(`   📂 Tipo: ${typeof song.image}`);
+            });
+        }
 
         musicLibrary = result;
         displayMusicList();
@@ -41,7 +53,7 @@ const loadLibrary = async () => {
 }
 
 function displayMusicList() {
-    console.log('peguei');
+    console.log('Carregando lista de músicas...');
     const list = document.getElementById('musicList');
 
     if (musicLibrary.length === 0) {
@@ -49,42 +61,54 @@ function displayMusicList() {
         return;
     }
 
-   list.innerHTML = musicLibrary.map((key) => `
-        <div class="music-item" onclick="selectSong(${key.id})" id="song-${key.id}">
-        ${key.image 
-  ? `<img src="${key.image}" alt="${key.title}" class="music-thumbnail" />` 
-  : '<img src="/image/default.jpg" alt="Thumbnail" class="music-thumbnail" />'}
-
-        <div>
-                 <strong>${key.title}</strong>
+    console.log('Músicas na biblioteca:', musicLibrary);
+    
+    list.innerHTML = musicLibrary.map((song) => {
+        console.log(`🎵 Música: ${song.title}`);
+        console.log(`🖼️  Campo image: ${song.image}`);
+        
+        // Corrige o caminho da imagem
+        let imagePath = '/image/default.jpg';
+        if (song.image) {
+            imagePath = `/image${song.image}`;
+        }
+        
+        console.log(`🔗 URL final: ${imagePath}`);
+        
+        return `
+            <div class="music-item" onclick="selectSong(${song.id})" id="song-${song.id}">
+                <img src="${imagePath}" 
+                     alt="${song.title}" 
+                     class="music-thumbnail" 
+                     onerror="this.src='/image/default.jpg'; console.log('❌ Erro ao carregar: ${imagePath}');" 
+                     onload="console.log('✅ Imagem carregada: ${imagePath}');" />
+                <div>
+                    <strong>${song.title}</strong>
+                </div>
+                <div class="file-info">${song.path.split('.').pop().toUpperCase()}</div>
             </div>
-            <div class="file-info">${key.path.split('.').pop().toUpperCase()}</div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
-
-
-   /*list.innerHTML = musicLibrary.map((key) => `
-        <div class="music-item" onclick="selectSong(${key.id})" id="song-${key.id}">
-            ${key.image ? `<img src="${key.image}" alt="${key.title}" class="music-thumbnail" />` : ''}
-            <div>
-                 <strong>${key.title}</strong>
-            </div>
-            <div class="file-info">${key.path.split('.').pop().toUpperCase()}</div>
-        </div>
-    `).join('');
-}*/
-
-function selectSong(index) {
+// FUNÇÃO CORRIGIDA - Agora busca a música pelo ID
+function selectSong(songId) {
     document.querySelectorAll('.music-item').forEach(item => item.classList.remove('selected'));
-    document.getElementById(`song-${index}`).classList.add('selected');
-    selectedSong = musicLibrary[index];
-    console.log('Music', musicLibrary);
-    console.log('index', index);
+    document.getElementById(`song-${songId}`).classList.add('selected');
+    
+    // Busca a música pelo ID ao invés de usar o ID como índice
+    selectedSong = musicLibrary.find(song => song.id === songId);
+    
+    console.log('Music Library:', musicLibrary);
+    console.log('Song ID:', songId);
     console.log('Música selecionada:', selectedSong);
-    showMessage(`Selecionado: ${selectedSong.title}`, 'success');
-    document.getElementById('playBtn').disabled = false;
+    
+    if (selectedSong) {
+        showMessage(`Selecionado: ${selectedSong.title}`, 'success');
+        document.getElementById('playBtn').disabled = false;
+    } else {
+        showMessage('Erro ao selecionar música', 'error');
+    }
 }
 
 const playSelected = async () => {
@@ -102,7 +126,7 @@ const playSelected = async () => {
         isPlaying = true;
         btn.innerText = '▶️ A Tocar';
         document.querySelectorAll('.music-item').forEach(i => i.classList.remove('playing'));
-        document.getElementById(`song-${musicLibrary.indexOf(selectedSong)}`).classList.add('playing');
+        document.getElementById(`song-${selectedSong.id}`).classList.add('playing');
         showMessage(`🎵 ${result.message}`, 'success');
         checkStatusPeriodically();
     } else {
