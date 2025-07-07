@@ -173,4 +173,28 @@ input#volumeRange::-moz-range-thumb {
     font-size: 1.2em;
 }
  
- 
+ .shortcuts {
+    background: #2b2b2b;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    font-size: 0.95em;
+}
+
+.shortcuts h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+    color: #fff;
+}
+
+.shortcuts ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.shortcuts li {
+    margin-bottom: 6px;
+}
