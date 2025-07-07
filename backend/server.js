@@ -7,7 +7,7 @@ const axios = require('axios');
 
 const app = express();
 const PORT = 3000;
-const PYTHON_API_URL = 'http://192.168.1.101:5000';
+const PYTHON_API_URL = 'http://172.16.221.201:5000';
 
 app.use(cors());
 app.use(express.json());
